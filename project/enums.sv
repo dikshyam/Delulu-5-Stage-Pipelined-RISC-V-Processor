@@ -81,31 +81,18 @@ typedef enum logic [4:0] {
     ALU_REMW   = 5'b10101,  // REMW (signed, funct3 = 110, RV64)
     ALU_REMUW  = 5'b10110,  // REMUW (unsigned, funct3 = 111, RV64)
 
+    // RV64I Word Arithmetic (W-type)
+    ALU_ADDW   = 5'b10111,  // ADDW
+    ALU_SUBW   = 5'b11000,  // SUBW
+    ALU_SLLW   = 5'b11001,  // SLLW
+    ALU_SRLW   = 5'b11010,  // SRLW
+    ALU_SRAW   = 5'b11011,  // SRAW
+    
     // Default No-Operation (NOP)
     ALU_NOP    = 5'b11111   // No Operation -> 31
 } ALUop;
 
 
-
-
-
-// // Opcode Enum (consolidated)
-// typedef enum logic [6:0] {
-//     OP_LUI       = 7'b0110111, // Load Upper Immediate
-//     OP_AUIPC     = 7'b0010111, // Add Upper Immediate to PC
-//     OP_JAL       = 7'b1101111, // Jump and Link
-//     OP_JALR      = 7'b1100111, // Jump and Link Register
-//     OP_BRANCH    = 7'b1100011, // Branch
-//     OP_LOAD      = 7'b0000011, // Load
-//     OP_STORE     = 7'b0100011, // Store
-//     OP_OP_IMM    = 7'b0010011, // Immediate Arithmetic
-//     OP_OP        = 7'b0110011, // Register Arithmetic
-//     OP_MISC_MEM  = 7'b0001111, // Miscellaneous Memory
-//     OP_SYSTEM    = 7'b1110011, // System Instructions
-//     OP_AMO       = 7'b0101111, // Atomic Operations
-//     OP_IMM_32    = 7'b0011011, // Immediate Arithmetic (32-bit)
-//     OP_OP_32     = 7'b0111011  // Register Arithmetic (32-bit)
-// } Opcode;
 
 typedef enum logic [6:0] {
     // Base Integer Instructions (RV32I and RV64I)

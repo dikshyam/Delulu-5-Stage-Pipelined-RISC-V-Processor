@@ -1,118 +1,120 @@
-module dcache (
-    input logic clk,
-    input logic reset,
-    input logic [63:0] mem_address,  // Address to fetch/store data
-    input logic [63:0] mem_data_in,  // Data to write
-    input logic [2:0] mem_size,      // Size of the memory operation (e.g., byte, half-word, word)
-    input logic wr_en,               // Write enable
-    output logic [63:0] mem_data_out,// Fetched data
-    output logic cache_hit,          // Cache hit signal
-    output logic [63:0] writeback_data, // Data to be written back to memory
-    input logic [511:0] axi_rdata,   // Data from AXI read (64 bytes)
-    input logic axi_rvalid,          // Valid signal for AXI read data
-    output logic [63:0] axi_araddr,  // Address for AXI read
-    output logic axi_arvalid,        // Valid signal for AXI read address
-    input logic axi_arready,         // Ready signal for AXI read address
-    output logic [63:0] axi_awaddr,  // Address for AXI write
-    output logic axi_awvalid,        // Valid signal for AXI write address
-    input logic axi_awready,         // Ready signal for AXI write address
-    output logic [63:0] axi_wdata,   // Data for AXI write
-    output logic axi_wvalid,         // Valid signal for AXI write data
-    input logic axi_wready,          // Ready signal for AXI write data
+module dcache #(
+  parameter ADDR_WIDTH = 64,
+  parameter DATA_WIDTH = 64,
+  parameter CACHE_LINES = 64
+)(
+  input  logic                 clk,
+  input  logic                 reset,
 
-    // Arbiter interface
-    output logic dcache_req,
-    input logic dcache_grant
+  // Memory interface
+  output logic [ADDR_WIDTH-1:0] mem_read_addr,
+  output logic                  mem_read_valid,
+  input  logic [DATA_WIDTH-1:0] mem_read_data,
+  input  logic                  mem_read_ready,
+
+  // CPU interface
+  input  logic                  read_enable,
+  input  logic [ADDR_WIDTH-1:0] read_address,
+  output logic [DATA_WIDTH-1:0] read_data,
+  output logic                  read_data_valid
 );
 
-    // Cache parameters
-    parameter CACHE_SIZE = 4096; // Cache size in bytes (4KB)
-    parameter LINE_SIZE = 64;    // Line size in bytes (64 bytes)
-    parameter NUM_WAYS = 2;      // Number of ways (2-way set associative)
-    parameter NUM_SETS = CACHE_SIZE / (LINE_SIZE * NUM_WAYS); // Number of sets
+  // ----------------------
+  // Derived Parameters
+  // ----------------------
+  localparam LINE_ADDR_WIDTH = $clog2(CACHE_LINES);
+  localparam TAG_WIDTH       = ADDR_WIDTH - LINE_ADDR_WIDTH - 3;
 
-    // Cache storage
-    logic [511:0] cache_data_array [NUM_SETS-1:0][NUM_WAYS-1:0]; // Cache data storage (64 bytes per line)
-    logic [63:0] cache_tags [NUM_SETS-1:0][NUM_WAYS-1:0]; // Cache tags
-    logic cache_valid [NUM_SETS-1:0][NUM_WAYS-1:0]; // Valid bits
-    logic cache_dirty [NUM_SETS-1:0][NUM_WAYS-1:0]; // Dirty bits
+  // ----------------------
+  // Internal Cache Memory
+  // ----------------------
+  logic [TAG_WIDTH-1:0]     tag_array   [CACHE_LINES-1:0];
+  logic [DATA_WIDTH-1:0]    data_array  [CACHE_LINES-1:0];
+  logic                     valid_array [CACHE_LINES-1:0];
 
-    // Address breakdown
-    logic [5:0] index; // Index for cache set
-    logic [63:6] tag;  // Tag for cache line
+  // ----------------------
+  // Internal Signals
+  // ----------------------
+  logic [TAG_WIDTH-1:0] tag;
+  logic [LINE_ADDR_WIDTH-1:0] index;
+  logic [2:0] byte_offset;
+  logic cache_hit;
+  logic [DATA_WIDTH-1:0] data_out;
 
-    // Cache control signals
-    logic hit;
-    logic [1:0] way_select;
-    logic [63:0] fetched_data;
+  assign byte_offset = read_address[2:0];
+  assign index       = read_address[2 +: LINE_ADDR_WIDTH];
+  assign tag         = read_address[ADDR_WIDTH-1 -: TAG_WIDTH];
 
-    // Address breakdown
-    assign index = mem_address[11:6]; // Example index bits
-    assign tag = mem_address[63:6];   // Example tag bits
+  assign read_data = data_out;
+  assign read_data_valid = cache_hit && read_enable;
 
-    // Cache lookup
-    always_comb begin
-        hit = 0;
-        fetched_data = 64'b0;
-        for (int i = 0; i < NUM_WAYS; i++) begin
-            if (cache_valid[index][i] && cache_tags[index][i] == tag) begin
-                hit = 1;
-                way_select = i;
-                fetched_data = cache_data_array[index][i][mem_address[5:3]*64 +: 64]; // Fetch data from cache line
-            end
-        end
-        cache_hit = hit;
-        mem_data_out = fetched_data;
-    end
+  // ----------------------
+  // FSM
+  // ----------------------
+  typedef enum logic [1:0] {
+      IDLE,
+      WAIT_MEM,
+      FILL
+  } state_t;
 
-    // Cache miss handling
-    always_ff @(posedge clk or posedge reset) begin
-        if (reset) begin
-            axi_arvalid <= 0;
-            axi_awvalid <= 0;
-            axi_wvalid <= 0;
-            cache_hit <= 0;
-            dcache_req <= 0;
-        end else begin
-            if (!hit) begin
-                axi_araddr <= mem_address;
-                dcache_req <= 1;
-                if (dcache_grant) begin
-                    axi_arvalid <= 1;
-                end
-            end else if (axi_arvalid && axi_arready) begin
-                axi_arvalid <= 0;
-                dcache_req <= 0;
-            end
+  state_t state, next_state;
 
-            if (axi_rvalid) begin
-                cache_data_array[index][way_select] <= axi_rdata;
-                cache_tags[index][way_select] <= tag;
-                cache_valid[index][way_select] <= 1;
-                cache_dirty[index][way_select] <= 0;
-                fetched_data <= axi_rdata;
-                cache_hit <= 1;
-            end else begin
-                cache_hit <= hit;
-            end
+  // ----------------------
+  // Next State Logic + Output Control (sequential now)
+  // ----------------------
+  logic [ADDR_WIDTH-1:0] mem_read_addr_reg;
+  logic                  mem_read_valid_reg;
 
-            if (wr_en) begin
-                if (hit) begin
-                    cache_data_array[index][way_select][mem_address[5:3]*64 +: 64] <= mem_data_in;
-                    cache_dirty[index][way_select] <= 1;
-                end else begin
-                    axi_awaddr <= mem_address;
-                    dcache_req <= 1;
-                    if (dcache_grant) begin
-                        axi_awvalid <= 1;
-                        axi_wdata <= mem_data_in;
-                        axi_wvalid <= 1;
-                    end
-                end
-            end
-        end
-    end
+  always_ff @(posedge clk or posedge reset) begin
+      if (reset) begin
+          state <= IDLE;
+          mem_read_addr <= 0;
+          mem_read_valid <= 0;
+      end else begin
+          state <= next_state;
+          mem_read_addr <= mem_read_addr_reg;
+          mem_read_valid <= mem_read_valid_reg;
+      end
+  end
 
-    assign writeback_data = cache_data_array[index][way_select];
+  always_comb begin
+      // defaults
+      next_state = state;
+      mem_read_addr_reg = 0;
+      mem_read_valid_reg = 0;
+
+      case (state)
+          IDLE: begin
+              if (read_enable && !cache_hit) begin
+                  mem_read_valid_reg = 1;
+                  mem_read_addr_reg = {read_address[ADDR_WIDTH-1:3], 3'b000};
+                  next_state = WAIT_MEM;
+              end
+          end
+          WAIT_MEM: begin
+              if (mem_read_ready)
+                  next_state = FILL;
+          end
+          FILL: begin
+              next_state = IDLE;
+          end
+      endcase
+  end
+
+  // ----------------------
+  // Tag Comparison & Cache Fill
+  // ----------------------
+  always_comb begin
+      cache_hit = valid_array[index] && (tag_array[index] == tag);
+      data_out = data_array[index];
+  end
+
+  always_ff @(posedge clk) begin
+      if (state == FILL) begin
+          tag_array[index]    <= tag;
+          data_array[index]   <= mem_read_data;
+          valid_array[index]  <= 1'b1;
+      end
+  end
 
 endmodule

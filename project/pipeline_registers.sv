@@ -1,52 +1,50 @@
 `include "pipeline_defs.sv"
 
-module IF_ID (
-    input  logic clk,
-    input  logic reset,
-    input  logic wr_en,              // Write enable
-    input  logic gen_bubble,         // Generate bubble (clear the pipeline register)
-    input  logic [63:0] pc_in,       // Input Program Counter (PC)
-    input  logic [31:0] instruction_in, // Input instruction
-    input  logic done_signal_in,
-    output logic [63:0] pc_out,      // Output Program Counter (PC)
-    output logic [31:0] instruction_out, // Output instruction
-    output  logic done_signal_out
-);
+// module IF_ID (
+//     input  logic clk,
+//     input  logic reset,
+//     input  logic wr_en,              // Write enable
+//     input  logic gen_bubble,         // Generate bubble (clear the pipeline register)
+//     input  logic [63:0] pc_in,       // Input Program Counter (PC)
+//     input  logic [31:0] instruction_in, // Input instruction
+//     input  logic done_signal_in,
+//     output logic [63:0] pc_out,      // Output Program Counter (PC)
+//     output logic [31:0] instruction_out, // Output instruction
+//     output  logic done_signal_out
+// );
+// // Internal pipeline registers
+// logic [63:0] pc_reg;
+// logic [31:0] instruction_reg;
+// always_ff @(posedge clk) begin
+//     if (reset) begin
+//         // Clear the registers on reset
+//         pc_reg <= 64'b0;
+//         instruction_reg <= 32'b0;
+//         $display("[DEBUG IF_ID] @%0t: Resetting IF_ID registers", $time);
+//     end else if (wr_en) begin
+//         if (gen_bubble) begin
+//             // Generate a bubble (clear pipeline registers)
+//             pc_reg <= 64'b0;
+//             instruction_reg <= 32'b0;
+//             $display("[DEBUG IF_ID] @%0t: Inserting bubble into IF_ID pipeline register", $time);
+//         end else begin
+//             // Normal write to pipeline registers
+//             pc_reg <= pc_in;
+//             instruction_reg <= instruction_in;
+//             $display("[DEBUG IF_ID] @%0t: Writing IF_ID: PC=%h, Instruction=%h", $time, pc_in, instruction_in);
+//         end
+//     end else begin
+//         // No write operation
+//         $display("[DEBUG IF_ID] @%0t: No write to IF_ID pipeline register (wr_en=%b, gen_bubble=%b)", $time, wr_en, gen_bubble);
+//     end
+// end
 
-    // Internal pipeline registers
-    logic [63:0] pc_reg;
-    logic [31:0] instruction_reg;
+// // Assign outputs
+// assign pc_out = pc_reg;
+// assign instruction_out = instruction_reg;
+// assign done_signal_out = done_signal_in;
 
-    always_ff @(posedge clk) begin
-        if (reset) begin
-            // Clear the registers on reset
-            pc_reg <= 64'b0;
-            instruction_reg <= 32'b0;
-            $display("[DEBUG IF_ID] @%0t: Resetting IF_ID registers", $time);
-        end else if (wr_en) begin
-            if (gen_bubble) begin
-                // Generate a bubble (clear pipeline registers)
-                pc_reg <= 64'b0;
-                instruction_reg <= 32'b0;
-                $display("[DEBUG IF_ID] @%0t: Inserting bubble into IF_ID pipeline register", $time);
-            end else begin
-                // Normal write to pipeline registers
-                pc_reg <= pc_in;
-                instruction_reg <= instruction_in;
-                $display("[DEBUG IF_ID] @%0t: Writing IF_ID: PC=%h, Instruction=%h", $time, pc_in, instruction_in);
-            end
-        end else begin
-            // No write operation
-            $display("[DEBUG IF_ID] @%0t: No write to IF_ID pipeline register (wr_en=%b, gen_bubble=%b)", $time, wr_en, gen_bubble);
-        end
-    end
-
-    // Assign outputs
-    assign pc_out = pc_reg;
-    assign instruction_out = instruction_reg;
-    assign done_signal_out = done_signal_in;
-
-endmodule
+// endmodule
 
 
 module ID_EX_pipeline_reg (

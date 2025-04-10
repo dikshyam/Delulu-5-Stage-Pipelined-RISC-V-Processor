@@ -1,0 +1,295 @@
+// module top
+// #(
+//   ID_WIDTH = 13,
+//   ADDR_WIDTH = 64,
+//   DATA_WIDTH = 64,
+//   STRB_WIDTH = DATA_WIDTH / 8,
+//   MAX_TIMEOUT = 10
+// )
+// (
+//   input  clk,
+//          reset,
+//          hz32768timer,
+
+//   input  [63:0] entry,
+//   input  [63:0] stackptr,
+//   input  [63:0] satp,
+
+//   // Interface to the bus
+//   output wire [ID_WIDTH-1:0]    m_axi_awid,
+//   output wire [ADDR_WIDTH-1:0]  m_axi_awaddr,
+//   output wire [7:0]             m_axi_awlen,
+//   output wire [2:0]             m_axi_awsize,
+//   output wire [1:0]             m_axi_awburst,
+//   output wire                   m_axi_awlock,
+//   output wire [3:0]             m_axi_awcache,
+//   output wire [2:0]             m_axi_awprot,
+//   output wire                   m_axi_awvalid,
+//   input  wire                   m_axi_awready,
+//   output wire [DATA_WIDTH-1:0]  m_axi_wdata,
+//   output wire [STRB_WIDTH-1:0]  m_axi_wstrb,
+//   output wire                   m_axi_wlast,
+//   output wire                   m_axi_wvalid,
+//   input  wire                   m_axi_wready,
+//   input  wire [ID_WIDTH-1:0]    m_axi_bid,
+//   input  wire [1:0]             m_axi_bresp,
+//   input  wire                   m_axi_bvalid,
+//   output wire                   m_axi_bready,
+//   output wire [ID_WIDTH-1:0]    m_axi_arid,
+//   output wire [ADDR_WIDTH-1:0]  m_axi_araddr,
+//   output wire [7:0]             m_axi_arlen,
+//   output wire [2:0]             m_axi_arsize,
+//   output wire [1:0]             m_axi_arburst,
+//   output wire                   m_axi_arlock,
+//   output wire [3:0]             m_axi_arcache,
+//   output wire [2:0]             m_axi_arprot,
+//   output wire                   m_axi_arvalid,
+//   input  wire                   m_axi_arready,
+//   input  wire [ID_WIDTH-1:0]    m_axi_rid,
+//   input  wire [DATA_WIDTH-1:0]  m_axi_rdata,
+//   input  wire [1:0]             m_axi_rresp,
+//   input  wire                   m_axi_rlast,
+//   input  wire                   m_axi_rvalid,
+//   output wire                   m_axi_rready,
+
+//   input  wire                   m_axi_acvalid,
+//   output wire                   m_axi_acready,
+//   input  wire [ADDR_WIDTH-1:0]  m_axi_acaddr,
+//   input  wire [3:0]             m_axi_acsnoop
+// );
+
+//     // Internal registers
+//   // logic [63:0] pc;
+//   // logic [63:0] registers [0:31];
+//   // logic [31:0] instruction;
+//   // logic [63:0] result;
+//   // logic [4:0]  rd;
+//   // logic write_enable;
+
+//   // logic [63:0] alu_operand1, alu_operand2, alu_result;
+//   // logic alu_zero, fetch_ready;
+//   // ALUop alu_op;
+
+//   // Fetch stage pipeline register signals
+//   // logic [63:0] IF_ID_pc_out;
+//   // logic [31:0] IF_ID_instruction_out;
+
+//   // Fetch stage variables
+//   // logic fetch_valid;            // Indicates if the fetch stage has valid data
+//   // logic [31:0] fetch_instruction; // Holds the fetched instruction
+//   // logic [63:0] fetch_pc;          // Holds the PC for the fetched instruction
+//   // logic [31:0] timeout_counter;   // Timeout counter for memory fetch
+//   logic low;
+
+// // Fetch stage pipeline register instantiation
+//   FetchPipelineRegister fetch_reg_inst (
+//       .clk(clk),
+//       .reset(reset),
+//       .wr_en(fetch_ready && m_axi_rvalid), // Write when fetch is ready and data is valid
+//       .gen_bubble(1'b0),                  // No bubble for now
+//       .pc_in(pc),                         // Input PC from fetch logic
+//       .instruction_in(instruction),       // Input instruction fetched
+//       .pc_out(IF_ID_pc_out),              // Output PC to decode stage
+//       .instruction_out(IF_ID_instruction_out) // Output instruction to decode stage
+//   );
+// // Internal registers
+//     logic [63:0] pc; // Program counter
+//     logic [63:0] fetched_instruction;
+//     logic [31:0] current_instruction;
+//     logic receive_processing, receive_ready;
+
+//     // AXI parameters
+//     localparam BURST_LEN = 8; // Reading 4 beats of data
+
+//   always_ff @(posedge clk or posedge reset) begin
+//       if (reset) begin
+//           // Reset all signals
+//           pc <= entry;  // Reset PC to the entry point
+//           fetched_instruction <= 64'b0;
+//           current_instruction <= 32'b0;
+//           receive_ready <= 1'b0;
+//           receive_processing <= 1'b0;
+
+//           // Reset AXI signals
+//           // m_axi_araddr <= 0;
+//           // m_axi_arlen <= 7;  // Fetch 8 bytes (64 bits)
+//           // m_axi_arsize <= 3'b010; // Size = 4 bytes (32 bits)
+//           // m_axi_arburst <= 2'b10; // Incrementing burst
+//           // m_axi_arvalid <= 0;
+//           m_axi_rready <= 1'b0;
+//           low <= 1;  // Start with the lower half of data
+//           $display("RESET: PC set to entry point %h at time %t", entry, $time);
+//       end else begin
+//           $display("pc: %x, araddr: %x, arburst: %b, arlen: %d", pc, m_axi_araddr, m_axi_arburst, m_axi_arlen);
+//           // AXI Read Request
+//           if (!m_axi_arvalid && !m_axi_rvalid && !receive_ready) begin
+//               m_axi_araddr  <= pc;   
+//               m_axi_arburst <= 2'b10; 
+//               m_axi_arid <= 0;
+//               m_axi_arlen   <= 8'h07; 
+//               m_axi_arvalid <= 1'b1; 
+//               // m_axi_arburst <= 2'b10;
+//               // receive_processing <= 1'b1;
+//               $display("FETCH: Requesting instruction from PC %h at time %t", pc, $time);
+//           end if (m_axi_arready && m_axi_arvalid) begin
+//               // Address handshake complete
+//               m_axi_arvalid <= 0;  // Deassert ARVALID
+//               $display("FETCH: Address handshake complete at PC %h at time %t", pc, $time);
+          
+//           end
+//           if (m_axi_rvalid && m_axi_rready) begin
+//               // Capture data and toggle `low` for next half
+//               // $display("FETCH: Fetching %h at time %t", pc, $time);
+//               // $display("Display: %x", m_axi_rdata);
+//               // fetched_instruction <= m_axi_rdata[63:0];
+//               // pc <= pc + 8;
+//               // instruction_low = m_axi_rdata[31:0];
+//               if (low) begin
+//                   fetched_instruction <= m_axi_rdata[63:0];  // Capture lower 32 bits
+//                   current_instruction <= fetched_instruction[31:0];
+//                   low <= 0;  // Switch to upper half
+//                   $display("FETCH: Fetched lower 32 bits: %h from PC %h at time %t", 
+//                             current_instruction, pc, $time);
+//               end else begin
+//                   // fetched_instruction[63:32] <= m_axi_rdata[63:32];  // Capture upper 32 bits
+//                   current_instruction <= fetched_instruction[63:32];
+//                   low <= 1;  // Reset for next fetch
+//                   // pc <= pc + 8;  // Increment PC after both halves are fetched
+//                   // m_axi_rready <= 0;  // Stop accepting data
+//                   // read_request_complete <= 1'b1;  // Mark request as complete
+//                   $display("FETCH: Fetched upper 32 bits: %h from PC %d at time %t", 
+//                             current_instruction, pc, $time);
+//               end
+//               $display("Display: %x", m_axi_rdata);
+
+//             if (m_axi_rdata == 64'b0 && m_axi_rlast) begin
+//               $display("m_axi_rlast is high at PC = %x.", pc);
+//               receive_ready <= 1'b0;
+//               // receive_processing <= 1'b0;
+//               m_axi_rready <= 1'b0; 
+//               pc <= pc + 8;    
+//               $finish;
+//             end else begin
+//               pc <= pc + 8;        
+//               receive_ready <= 1'b1; 
+//               // receive_processing <= 1'b0; 
+//               m_axi_rready <= 1'b1;
+//               // m_axi_arvalid <= 0; 
+//             end
+//           end 
+//           else begin
+//               m_axi_rready <= 1'b1;  // Assert RREADY to accept data
+//               $display("Ready to accept data at time %t", $time);
+//           end
+//       end
+//   end
+
+
+
+//       // endmodule
+
+
+
+
+//   // // Fetch stage (always_ff)
+//   // always_ff @(posedge clk or posedge reset) begin
+//   //     if (reset) begin
+//   //         pc <= entry;
+//   //         IF_ID <= '0; // Reset IF_ID pipeline register
+//   //         $display("RESET: PC set to entry point %h at time %t", entry, $time);
+//   //     end else begin
+//   //         // Fetch instruction
+//   //         IF_ID.instruction <= m_axi_rdata[31:0];
+//   //         IF_ID.pc <= pc;
+//   //         pc <= pc + 4; // Increment PC
+//   //         $display("FETCH: Fetched instruction %h from PC %h at time %t", m_axi_rdata[31:0], pc, $time);
+
+//   //         // Terminate simulation if instruction is all zeros
+//   //         if (m_axi_rdata[31:0] == 32'b0) begin
+//   //             $display("All-zero instruction encountered. Halting simulation.");
+//   //             $finish;
+//   //         end
+//   //     end
+//   // end
+
+//   decoder_output decoded_inst;
+//   Decoder decoder (
+//     .inst(IF_ID_instruction_out), // Input instruction from fetch stage
+//     .valid(1'b1),
+//     .pc(IF_ID_pc_out), // Input PC from fetch stage
+//     .out(decoded_inst), // Decoded instruction output
+//     .curr_priv_mode(2'b00),
+//     .gen_trap(gen_trap),
+//     .gen_trap_cause(gen_trap_cause),
+//     .gen_trap_val(gen_trap_val)
+//   );
+
+
+
+//     // Decoder instance
+//   // decoder_output decoded_inst;
+//   // Decoder decoder(
+//   //   .inst(IF_ID.instruction),
+//   //   .valid(1'b1),
+//   //   .pc(IF_ID.pc),
+//   //   .out(decoded_inst),
+//   //   .curr_priv_mode(2'b00),
+//   //   .gen_trap(),
+//   //   .gen_trap_cause(),
+//   //   .gen_trap_val()
+//   // );
+
+//   // Decode stage (always_comb)
+//   // always_comb begin
+//       // Decode fetched instruction
+//       // Decoder decoder_inst (
+//       //     .inst(IF_ID.instruction),
+//       //     .valid(1'b1),
+//       //     .pc(IF_ID.pc),
+//       //     .out(decoded_inst),
+//       //     .curr_priv_mode(2'b00), // Default to user mode
+//       //     .gen_trap(),
+//       //     .gen_trap_cause(),
+//       //     .gen_trap_val()
+//       // );
+
+//   // ID_EX.decoded_inst = decoded_inst; // Pass to next stage
+//   // $display("DECODE: Decoded instruction at PC %h. rs1=%0d, rs2=%0d, rd=%0d, imm=%0d at time %t",
+//   //           IF_ID.pc, decoded_inst.rs1, decoded_inst.rs2, decoded_inst.rd, decoded_inst.immed, $time);
+//   // end
+
+//     // Execute stage (always_comb)
+//   // always_comb begin
+//   //   // Operand selection
+//   //   alu_operand1 = registers[ID_EX.decoded_inst.rs1];
+//   //   alu_operand2 = ID_EX.decoded_inst.alu_use_immed ? ID_EX.decoded_inst.immed : registers[ID_EX.decoded_inst.rs2];
+//   //   alu_op = ID_EX.decoded_inst.alu_op;
+//   //   $display("%d", alu_op);
+
+//   //   // ALU computation
+//   ALU alu_inst (
+//       .operand1(alu_operand1),
+//       .operand2(alu_operand2),
+//       .alu_op(alu_op),
+//       .result(alu_result),
+//       .zero(alu_zero)
+//   );
+
+//   //   EX_MEM.alu_result = alu_result;
+//   //   EX_MEM.rd = ID_EX.decoded_inst.rd;
+//   //   EX_MEM.write_enable = ID_EX.decoded_inst.en_rd;
+
+//   //   $display("EXECUTE: ALU result=%h, rd=%0d, alu_op=%0d at time %t", alu_result, EX_MEM.rd, alu_op, $time);
+//   // end
+
+//   //   // Write-back stage
+//   // always_ff @(posedge clk or posedge reset) begin
+//   //     if (reset) begin
+//   //         $display("RESET: Write-back reset at time %t", $time);
+//   //     end else if (EX_MEM.write_enable && EX_MEM.rd != 0) begin
+//   //         registers[EX_MEM.rd] <= EX_MEM.alu_result;
+//   //         $display("WRITE-BACK: Writing %h to Register[%0d] at time %t", EX_MEM.alu_result, EX_MEM.rd, $time);
+//   //     end
+//   // end
+
+// endmodule

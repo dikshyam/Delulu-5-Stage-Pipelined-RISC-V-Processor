@@ -1,69 +1,53 @@
 module cache_arbiter (
-    input logic clk,
-    input logic reset,
+    input  logic clk,
+    input  logic reset,
 
-    // I-Cache signals
-    input  logic i_cache_req,
-    input  logic [63:0] i_cache_addr,
-    output logic i_cache_grant,
+    input  logic icache_req,
+    input  logic dcache_req,
 
-    // D-Cache signals
-    input  logic d_cache_req,
-    input  logic [63:0] d_cache_addr,
-    output logic d_cache_grant,
-
-    // AXI Memory Interface
-    input  logic m_axi_ready,
-    output logic [63:0] m_axi_addr,
-    output logic m_axi_valid
+    output logic icache_grant,
+    output logic dcache_grant
 );
-
-    // State Variables
-    logic last_grant;  // 0 = I-Cache, 1 = D-Cache
-    logic grant_pending;
-
+    
+    logic last_grant; // 0 = I-Cache, 1 = D-Cache
+    
     always_ff @(posedge clk or posedge reset) begin
         if (reset) begin
-            i_cache_grant <= 0;
-            d_cache_grant <= 0;
-            m_axi_valid   <= 0;
-            last_grant    <= 0;  // Start with I-Cache
-            grant_pending <= 0;
+            icache_grant <= 0;
+            dcache_grant <= 0;
+            last_grant   <= 0;
+            $display("[ARBITER] Reset: clearing grants");
         end else begin
-            case ({i_cache_req, d_cache_req})
-                2'b10: begin  // I-Cache request only
-                    i_cache_grant <= 1;
-                    d_cache_grant <= 0;
-                    m_axi_addr    <= i_cache_addr;
-                    m_axi_valid   <= 1;
-                    last_grant    <= 0;
+            case ({icache_req, dcache_req})
+                2'b10: begin
+                    icache_grant <= 1;
+                    dcache_grant <= 0;
+                    last_grant   <= 0;
+                    $display("[ARBITER] Grant -> ICache (Only ICache requested)");
                 end
-                2'b01: begin  // D-Cache request only
-                    i_cache_grant <= 0;
-                    d_cache_grant <= 1;
-                    m_axi_addr    <= d_cache_addr;
-                    m_axi_valid   <= 1;
-                    last_grant    <= 1;
+                2'b01: begin
+                    icache_grant <= 0;
+                    dcache_grant <= 1;
+                    last_grant   <= 1;
+                    $display("[ARBITER] Grant -> DCache (Only DCache requested)");
                 end
-                2'b11: begin  // Both caches request access
+                2'b11: begin
                     if (last_grant == 0) begin
-                        i_cache_grant <= 0;
-                        d_cache_grant <= 1;
-                        m_axi_addr    <= d_cache_addr;
-                        m_axi_valid   <= 1;
-                        last_grant    <= 1;
+                        icache_grant <= 0;
+                        dcache_grant <= 1;
+                        last_grant   <= 1;
+                        $display("[ARBITER] Both requested - Grant -> DCache (ICache was last)");
                     end else begin
-                        i_cache_grant <= 1;
-                        d_cache_grant <= 0;
-                        m_axi_addr    <= i_cache_addr;
-                        m_axi_valid   <= 1;
-                        last_grant    <= 0;
+                        icache_grant <= 1;
+                        dcache_grant <= 0;
+                        last_grant   <= 0;
+                        $display("[ARBITER] Both requested - Grant -> ICache (DCache was last)");
                     end
                 end
                 default: begin
-                    i_cache_grant <= 0;
-                    d_cache_grant <= 0;
-                    m_axi_valid   <= 0;
+                    icache_grant <= 0;
+                    dcache_grant <= 0;
+                    $display("[ARBITER] No requests - No grant");
                 end
             endcase
         end

@@ -1,143 +1,89 @@
-// // module RegisterFile (
-// //     input  logic clk,
-// //     input  logic reset,
-// //     input  logic [63:0] initial_stackptr, // Initial value for the stack pointer
+// register_file.sv
+// Module that handles reading and writing to architectural registers, with RAW hazard tracking.
 
-// //     // Register addresses for read and write
-// //     input  logic [4:0] rs1_addr,          // Read address 1
-// //     input  logic [4:0] rs2_addr,          // Read address 2
-// //     input  logic [4:0] writeback_addr,    // Writeback address
-
-// //     // Data for writeback
-// //     input  logic [63:0] writeback_data,   // Data to be written
-// //     input  logic reg_write_enable,        // Enable signal for writeback
-
-// //     // Outputs for read data
-// //     output logic [63:0] rs1_data,         // Data from rs1
-// //     output logic [63:0] rs2_data,         // Data from rs2
-
-// //     // Outputs for system calls or debugging
-// //     output logic [63:0] reg_a0,           // Register a0 (argument 0 / return value)
-// //     output logic [63:0] reg_a1,
-// //     output logic [63:0] reg_a2,
-// //     output logic [63:0] reg_a3,
-// //     output logic [63:0] reg_a4,
-// //     output logic [63:0] reg_a5,
-// //     output logic [63:0] reg_a6,
-// //     output logic [63:0] reg_a7,
-
-// //     // Explicit register file (separate input and output)
-// //     input  logic [63:0] registers_in [0:31], // Input register file
-// //     output logic [63:0] registers_out [0:31] // Output register file
-// // );
-
-// //     integer i;
-
-// //     // Copy input registers to an internal register array for manipulation
-// //     logic [63:0] registers [0:31];
-
-// //     always_comb begin
-// //         for (i = 0; i < 32; i++) begin
-// //             registers[i] = registers_in[i];
-// //         end
-// //     end
-
-// //     // Read logic
-// //     assign rs1_data = (rs1_addr != 5'b0) ? registers[rs1_addr] : 64'h0; // Return 0 for address 0
-// //     assign rs2_data = (rs2_addr != 5'b0) ? registers[rs2_addr] : 64'h0;
-
-// //     // Debugging or system call access (specific argument registers)
-// //     assign reg_a0 = registers[10]; // a0 register
-// //     assign reg_a1 = registers[11]; // a1 register
-// //     assign reg_a2 = registers[12]; // a2 register
-// //     assign reg_a3 = registers[13]; // a3 register
-// //     assign reg_a4 = registers[14]; // a4 register
-// //     assign reg_a5 = registers[15]; // a5 register
-// //     assign reg_a6 = registers[16]; // a6 register
-// //     assign reg_a7 = registers[17]; // a7 register
-
-// //     // Write logic
-// //     // Write logic
-// //     always_ff @(posedge clk) begin
-// //         if (reset) begin
-// //             // Reset all registers to 0
-// //             for (i = 0; i < 32; i++) begin
-// //                 registers[i] <= 64'h0;
-// //             end
-
-// //             // Initialize stack pointer (sp)
-// //             registers[2] <= initial_stackptr;
-
-// //             // Debug prints
-// //             $display("[REGISTER AT RESET] initial_stackptr %h", initial_stackptr);
-// //             for (i = 0; i < 32; i++) begin
-// //                 $display("[REGISTER AT RESET] Register x%0d updated to %h", i, registers[i]);
-// //             end
-
-// //             $display("[REGISTER RESET] All registers reset and stack pointer initialized");
-// //         end 
-
-// //         else if (reg_write_enable) begin
-// //             if (writeback_addr != 5'b0) begin // Prevent writing to x0 (hardwired to 0)
-// //                 registers[writeback_addr] <= writeback_data;
-// //                 $display("[REGISTER WRITE] Register x%0d updated to %h at time %t",
-// //                         writeback_addr, writeback_data, $time);
-// //             end
-// //         end
-// //     end
-
-
-// //     // Assign updated registers back to output
-// //     always_comb begin
-// //         for (i = 0; i < 32; i++) begin
-// //             registers_out[i] = registers[i];
-// //         end
-// //     end
-// // endmodule
-// module RegisterFile (
-//     input  logic clk,
-//     input  logic reset,
-
-//     // Register Addresses
-//     input  logic [4:0] rs1_addr,          // Read address 1
-//     input  logic [4:0] rs2_addr,          // Read address 2
-//     input  logic [4:0] writeback_addr,    // Writeback address
-
-//     // Data for Writeback
-//     input  logic [63:0] writeback_data,   // Data to be written
-//     input  logic reg_write_enable,        // Enable signal for writeback
-
-//     // Register Values (Input from Top)
-//     input  logic [63:0] registers_in [0:31], 
-
-//     // Updated Registers (Output to Top)
-//     output logic [63:0] registers_out [0:31], 
-
-//     // Outputs for Read Data
-//     output logic [63:0] rs1_data,         // Data from rs1
-//     output logic [63:0] rs2_data          // Data from rs2
-// );
-
-//     logic [63:0] registers_internal [0:31];
-
-//     // Initialize Registers Internally
-//     always_ff @(posedge clk) begin
-//         if (reset) begin
-//             for (int i = 0; i < 32; i++) begin
-//                 registers_internal[i] <= 64'h0;
-//             end
-//         end else if (reg_write_enable && (writeback_addr != 5'b0)) begin
-//             registers_internal[writeback_addr] <= writeback_data;
-//             $display("[REGISTER WRITE] Register x%0d <= %h", writeback_addr, writeback_data);
-//         end
-//     end
-
-//     // Read Logic
-//     assign rs1_data = (rs1_addr != 5'b0) ? registers_internal[rs1_addr] : 64'h0;
-//     assign rs2_data = (rs2_addr != 5'b0) ? registers_internal[rs2_addr] : 64'h0;
-
-//     // Output Updated Registers
-//     assign registers_out = registers_internal;
-
-// endmodule
-
+module register_file 
+    #(
+      parameter ADDR_WIDTH = 5,
+      parameter DATA_WIDTH = 64
+    )
+    (
+        input clk,
+        input reset,
+        input [DATA_WIDTH-1:0] stackptr,
+    
+        // Read interface
+        input  [ADDR_WIDTH-1:0] rs1_addr,
+        input  [ADDR_WIDTH-1:0] rs2_addr,
+        output logic signed [DATA_WIDTH-1:0] rs1_data,
+        output logic signed [DATA_WIDTH-1:0] rs2_data,
+    
+        // Write interface
+        input  logic reg_write_en,
+        input  [ADDR_WIDTH-1:0] rd_addr,
+        input  signed [DATA_WIDTH-1:0] rd_data,
+        output logic reg_write_complete,
+    
+        // RAW hazard tracking
+        input  [ADDR_WIDTH-1:0] mark_busy_addr,
+        input  [ADDR_WIDTH-1:0] clear_busy_addr,
+        output logic raw_hazard,
+    
+        // Debug
+        output logic [DATA_WIDTH-1:0] registers [31:0]
+    );
+    
+        logic [31:0] reg_busy;
+        logic raw1, raw2;
+    
+        // READ LOGIC
+        always_comb begin
+            rs1_data = registers[rs1_addr];
+            rs2_data = registers[rs2_addr];
+    
+            raw1 = (rs1_addr != 0) && reg_busy[rs1_addr];
+            raw2 = (rs2_addr != 0) && reg_busy[rs2_addr];
+    
+            raw_hazard = raw1 || raw2;
+        end
+    
+        // WRITE + BUSY TRACKING LOGIC
+        always_ff @(posedge clk) begin
+            if (reset) begin
+                for (int i = 0; i < 32; i++) begin
+                    if (i == 2) begin
+                        registers[i] <= stackptr;
+                        $display("[RESET] Register x%0d initialized to stackptr: %h", i, stackptr);
+                    end else begin
+                        registers[i] <= 64'd0;
+                        $display("[RESET] Register x%0d initialized to 0", i);
+                    end
+                    reg_busy[i] <= 1'b0;
+                end
+                reg_write_complete <= 0;
+            end else begin
+                // Register writeback
+                if (reg_write_en && (rd_addr != 0)) begin
+                    registers[rd_addr] <= rd_data;
+                    reg_busy[rd_addr] <= 1'b0;
+                    reg_write_complete <= 1;
+                    $display("[REGISTER WRITE] x%0d <= %h", rd_addr, rd_data);
+                end else begin
+                    reg_write_complete <= 0;
+                end
+    
+                // Set busy when decode stage schedules a write
+                if (mark_busy_addr != 0) begin
+                    reg_busy[mark_busy_addr] <= 1'b1;
+                    $display("[RAW TRACK] Marked x%0d as busy", mark_busy_addr);
+                end
+    
+                // Clear busy when WB stage completes write
+                if (clear_busy_addr != 0) begin
+                    reg_busy[clear_busy_addr] <= 1'b0;
+                    $display("[RAW TRACK] Cleared busy bit for x%0d", clear_busy_addr);
+                end
+            end
+        end
+    
+    endmodule
+    

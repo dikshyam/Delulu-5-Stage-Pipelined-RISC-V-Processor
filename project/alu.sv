@@ -1,40 +1,5 @@
 `include "enums.sv"
-// ALU Module with ALUop Enum
-// module ALU(
-//     input logic [63:0] src1,        // First operand
-//     input logic [63:0] src2,        // Second operand
-//     input ALUop alu_op,             // ALU operation code using enum
-//     output logic [63:0] alu_result,     // ALU result
-//     output logic zero_flag          // Zero flag (1 if result == 0, else 0)
-// );
 
-//   always_comb begin
-//     case (ALUop)
-//       ALU_ADD:  result = src1 + src2;                  // ADD
-//       ALU_SUB:  result = src1 - src2;                  // SUB
-//       ALU_AND:  result = src1 & src2;                  // AND
-//       ALU_OR:   result = src1 | src2;                  // OR
-//       ALU_XOR:  result = src1 ^ src2;                  // XOR
-//       ALU_SLL:  result = src1 << src2[5:0];            // SHIFT LEFT (using lower 6 bits of src2 for shift count)
-//       ALU_SRL:  result = src1 >> src2[5:0];            // SHIFT RIGHT (logical)
-//       ALU_SRA:  result = src1 >>> src2[5:0];           // SHIFT RIGHT (arithmetic)
-//       ALU_SLT:  result = (src1 < src2) ? 64'b1 : 64'b0; // Set Less Than (signed)
-//       ALU_SLTU: result = (src1 < src2) ? 64'b1 : 64'b0; // Set Less Than (unsigned)
-//       ALU_MUL:  result = src1 * src2;                  // MUL (multiplication)
-//       ALU_MULH: result = (src1 * src2) >> 64;          // MULH (high 64-bits of the product)
-//       ALU_DIV:  result = src1 / src2;                  // DIV (integer division)
-//       ALU_REM:  result = src1 % src2;                  // REM (remainder)
-//       default:   result = 64'b0;                        // Default case (NOP or zero)
-//     endcase
-//     zero_flag = (alu_result == 64'b0); // Set zero_flag if result is zero
-//   end
-// endmodule
-
-// typedef struct {
-//     ALUop alu_op;           // ALU operation field of type ALUop
-//     logic alu_use_immed;    // Flag for using immediate
-//     logic [31:0] rs1, rs2, immed; // Register operands and immediate value
-// } alu_input;
 module ALU (
     input  logic [63:0] operand1,       // First operand
     input  logic [63:0] operand2,       // Second operand
@@ -47,7 +12,7 @@ module ALU (
 );
 
 logic [63:0] temp_result;
-
+ 
   always_comb begin
     // Detailed debugging statement
     $display("[ALU DEBUG] PC=%h | Instr=%h | Operand1=%h | Operand2=%h | ALU_OP=%h", 
@@ -72,6 +37,20 @@ logic [63:0] temp_result;
       ALU_DIVU:  temp_result = (operand2 != 0) ? $unsigned(operand1) / $unsigned(operand2) : 64'b0; // DIVU
       ALU_REM:   temp_result = (operand2 != 0) ? $signed(operand1) % $signed(operand2) : 64'b0; // REM
       ALU_REMU:  temp_result = (operand2 != 0) ? $unsigned(operand1) % $unsigned(operand2) : 64'b0; // REMU
+
+      // RV64M + RV64I Word Ops (32-bit)
+      ALU_ADDW:   temp_result = $signed(operand1[31:0]) + $signed(operand2[31:0]);
+      ALU_SUBW:   temp_result = $signed(operand1[31:0]) - $signed(operand2[31:0]);
+      ALU_SLLW:   temp_result = $signed(operand1[31:0]) <<< operand2[4:0];
+      ALU_SRLW:   temp_result = $unsigned(operand1[31:0]) >> operand2[4:0];
+      ALU_SRAW:   temp_result = $signed(operand1[31:0]) >>> operand2[4:0];
+
+      ALU_MULW:   temp_result = $signed(operand1[31:0]) * $signed(operand2[31:0]);
+      ALU_DIVW:   temp_result = (operand2[31:0] != 0) ? $signed(operand1[31:0]) / $signed(operand2[31:0]) : 64'd0;
+      ALU_DIVUW:  temp_result = (operand2[31:0] != 0) ? $unsigned(operand1[31:0]) / $unsigned(operand2[31:0]) : 64'd0;
+      ALU_REMW:   temp_result = (operand2[31:0] != 0) ? $signed(operand1[31:0]) % $signed(operand2[31:0]) : 64'd0;
+      ALU_REMUW:  temp_result = (operand2[31:0] != 0) ? $unsigned(operand1[31:0]) % $unsigned(operand2[31:0]) : 64'd0;
+
 
       default:  temp_result = 64'b0;                              // Default (NOP or zero)
     endcase
