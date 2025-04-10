@@ -3,10 +3,10 @@
 .settings
 
 # Ignore the obj_dir folder
-obj_dir/
+project/obj_dir/
 
 # Ignore the trace.vcd file
-trace.vcd
+project/trace.vcd
 
 # Ignore test FSM verilog file
 test.sv
