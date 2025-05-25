@@ -379,7 +379,7 @@ module Execute (
     // In your initialization/reset logic:
     initial begin
         // Open log file for writing
-        ex_logfile = $fopen("/home/dimohanty/CPU/logs/execute_transactions.log", "w");
+        ex_logfile = $fopen("/home/dimohanty/CSE-502-ComputerArchitecture/Delulu/logs/execute_transactions.log", "w");
         if (!ex_logfile) begin
             $display("[EXECUTE] ERROR: Failed to open transaction log file");
         end else begin

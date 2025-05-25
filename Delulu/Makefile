@@ -3,8 +3,8 @@
 # PROG=/shared/cse502/tests/project/prog2 20
 # PROG=/shared/cse502/tests/project/prog5
 # PROG=/shared/cse502/tests/project/prog3
-# PROG=/shared/cse502/tests/project/prog1
-PROG=/shared/cse502/tests/project/prog4
+PROG=/shared/cse502/tests/project/prog1
+# PROG=/shared/cse502/tests/project/prog4
 
 
 #PROG=/shared/cse502/tests/bbl.bin

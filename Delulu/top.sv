@@ -103,7 +103,7 @@ logic grant_dcache;
 
 // FOR LOGGING
 logic enable_log;
-assign enable_log = 0;
+assign enable_log = 1;
 
 // always_ff @(posedge clk) begin
 //     $display("[TOP ARBITER DEBUG @ %0t] clk=%b | icache_req=%b dcache_req=%b => icache_grant=%b dcache_grant=%b",

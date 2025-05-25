@@ -28,7 +28,7 @@ integer alu_log_file;
 // In your initialization/reset logic:
 initial begin
     // Open error log file for writing
-    alu_error_logfile = $fopen("/home/dimohanty/CPU/logs/alu_errors.log", "w");
+    alu_error_logfile = $fopen("/home/dimohanty/CSE-502-ComputerArchitecture/Delulu/logs/alu_errors.log", "w");
     if (!alu_error_logfile) begin
         $display("[ALU] ERROR: Failed to open error log file");
     end else begin
@@ -37,7 +37,7 @@ initial begin
     end
 
     // Open general operations log file
-    alu_log_file = $fopen("/home/dimohanty/CPU/logs/alu_operations.log", "w");
+    alu_log_file = $fopen("/home/dimohanty/CSE-502-ComputerArchitecture/Delulu/logs/alu_operations.log", "w");
     if (!alu_log_file) begin
         $display("[ALU] ERROR: Failed to open operations log file");
     end else begin

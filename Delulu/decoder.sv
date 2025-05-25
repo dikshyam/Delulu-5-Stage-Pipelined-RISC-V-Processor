@@ -50,14 +50,14 @@ module Decoder (
     // In your initialization/reset logic:
     initial begin
         // Open decoder error log file for writing
-        decoder_error_logfile = $fopen("/home/dimohanty/CPU/logs/decoder_errors.log", "w");
+        decoder_error_logfile = $fopen("/home/dimohanty/CSE-502-ComputerArchitecture/Delulu/logs/decoder_errors.log", "w");
         if (!decoder_error_logfile) begin
             $display("[DECODER] ERROR: Failed to open error log file");
         end else begin
             $fwrite(decoder_error_logfile, "TIME,PC,INSTRUCTION,ERROR_TYPE,DETAILS\n");
             // $display("[DECODER] Error logging enabled to decoder_errors.log");
         end
-        decoder_trace_logfile = $fopen("/home/dimohanty/CPU/logs/decoder_trace.log", "w");
+        decoder_trace_logfile = $fopen("/home/dimohanty/CSE-502-ComputerArchitecture/Delulu/logs/decoder_trace.log", "w");
         if (!decoder_trace_logfile) begin
             $display("[DECODER] ERROR: Failed to open trace log file");
         end else begin

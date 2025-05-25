@@ -233,7 +233,7 @@ integer tx_logfile;
 // In your initialization/reset logic:
 initial begin
     // Open log file for writing
-    tx_logfile = $fopen("/home/dimohanty/CPU/logs/dcache_transactions.log", "w");
+    tx_logfile = $fopen("/home/dimohanty/CSE-502-ComputerArchitecture/Delulu/logs/dcache_transactions.log", "w");
     if (!tx_logfile) begin
         $display("[DCACHE] ERROR: Failed to open transaction log file");
     end else begin
@@ -296,7 +296,7 @@ integer snoop_logfile;
 // In your initialization/reset logic:
 initial begin
     // Open log file for writing
-    snoop_logfile = $fopen("/home/dimohanty/CPU/logs/snoop_invalidations.log", "w");
+    snoop_logfile = $fopen("/home/dimohanty/CSE-502-ComputerArchitecture/Delulu/logs/snoop_invalidations.log", "w");
     if (!snoop_logfile) begin
         $display("[DCACHE] ERROR: Failed to open snoop log file");
     end else begin

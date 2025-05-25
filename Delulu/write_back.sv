@@ -207,7 +207,7 @@ integer reg_logfile;
 // Initialize logging (add to your initial block)
 initial begin
     // Open log file for writing
-    reg_logfile = $fopen("/home/dimohanty/CPU/logs/register_updates.log", "w");
+    reg_logfile = $fopen("/home/dimohanty/CSE-502-ComputerArchitecture/Delulu/logs/register_updates.log", "w");
     if (!reg_logfile) begin
         $display("[WB] ERROR: Failed to open register update log file");
     end else begin
