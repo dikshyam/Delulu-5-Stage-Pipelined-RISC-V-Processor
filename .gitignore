@@ -10,7 +10,3 @@ project/trace.vcd
 
 # Ignore test FSM verilog file
 test.sv
-project/dramsim2/
-project/outputs/
-project/tests/
-project/proj_prog1.txt

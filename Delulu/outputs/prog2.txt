@@ -1,0 +1,22 @@
+cd obj_dir/ && env HAVETLB=n FULLSYSTEM=n ./Vtop /shared/cse502/tests/project/prog2 20
+Loading ELF header #0. offset: 0 filesize: 535203 memsize: 535203 vaddr: 10000 paddr: 10000 align: 4096
+Read 535203 bytes at 10000
+Loading ELF header #1. offset: 82f50 filesize: 1c00 memsize: 3320 vaddr: 93f50 paddr: 93f50 align: 4096
+Read 7168 bytes at 93f50
+Setting errno_addr to 93f70 (TLS at 93f50+0x20)
+Enabling waves...
+[DCACHE] Transaction logging enabled to dcache_transactions.log
+[DECODER] Error logging enabled to decoder_errors.log
+[EXECUTE] Transaction logging enabled to execute_transactions.log
+[WB] Register update logging enabled to register_updates.log
+[ALU] Error logging enabled to alu_errors.log
+[ALU] Operations logging enabled to alu_operations.log
+[DCACHE] Snoop logging enabled to snoop_invalidations.log
+31415911
+[DECODER] Error log file closed
+[EXECUTE] Transaction log file closed
+[ALU] Closed error log file
+[ALU] Closed operations log file
+[DCACHE] Transaction log file closed
+[DCACHE] Snoop log file closed
+[WB] Register update log file closed

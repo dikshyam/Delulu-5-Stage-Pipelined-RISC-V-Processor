@@ -1,0 +1,37 @@
+make -j5 -C obj_dir/ -f Vtop.mk CXX="ccache g++"
+make[1]: Entering directory '/home/dimohanty/Delulu/obj_dir'
+ccache g++  -I.  -MMD -I/shared/share/verilator/include -I/shared/share/verilator/include/vltstd -DVL_PRINTF=printf -DVM_COVERAGE=0 -DVM_SC=0 -DVM_TRACE=0 -Wno-char-subscripts -Wno-sign-compare -Wno-uninitialized -Wno-unused-but-set-variable -Wno-unused-parameter -Wno-unused-variable     -I/shared/cse502 -g3 -std=c++11   -c -o fake-os.o ../fake-os.cpp
+ccache g++  -I.  -MMD -I/shared/share/verilator/include -I/shared/share/verilator/include/vltstd -DVL_PRINTF=printf -DVM_COVERAGE=0 -DVM_SC=0 -DVM_TRACE=0 -Wno-char-subscripts -Wno-sign-compare -Wno-uninitialized -Wno-unused-but-set-variable -Wno-unused-parameter -Wno-unused-variable     -I/shared/cse502 -g3 -std=c++11   -c -o hardware.o ../hardware.cpp
+ccache g++  -I.  -MMD -I/shared/share/verilator/include -I/shared/share/verilator/include/vltstd -DVL_PRINTF=printf -DVM_COVERAGE=0 -DVM_SC=0 -DVM_TRACE=0 -Wno-char-subscripts -Wno-sign-compare -Wno-uninitialized -Wno-unused-but-set-variable -Wno-unused-parameter -Wno-unused-variable     -I/shared/cse502 -g3 -std=c++11   -c -o main.o ../main.cpp
+ccache g++  -I.  -MMD -I/shared/share/verilator/include -I/shared/share/verilator/include/vltstd -DVL_PRINTF=printf -DVM_COVERAGE=0 -DVM_SC=0 -DVM_TRACE=0 -Wno-char-subscripts -Wno-sign-compare -Wno-uninitialized -Wno-unused-but-set-variable -Wno-unused-parameter -Wno-unused-variable     -I/shared/cse502 -g3 -std=c++11   -c -o system.o ../system.cpp
+/usr/bin/perl /shared/share/verilator/bin/verilator_includer -DVL_INCLUDE_OPT=include Vtop.cpp Vtop___024unit.cpp > Vtop__ALLcls.cpp
+/usr/bin/perl /shared/share/verilator/bin/verilator_includer -DVL_INCLUDE_OPT=include Vtop__Dpi.cpp Vtop__Syms.cpp > Vtop__ALLsup.cpp
+ccache g++  -I.  -MMD -I/shared/share/verilator/include -I/shared/share/verilator/include/vltstd -DVL_PRINTF=printf -DVM_COVERAGE=0 -DVM_SC=0 -DVM_TRACE=0 -Wno-char-subscripts -Wno-sign-compare -Wno-uninitialized -Wno-unused-but-set-variable -Wno-unused-parameter -Wno-unused-variable     -I/shared/cse502 -g3 -std=c++11   -c -o Vtop__ALLcls.o Vtop__ALLcls.cpp
+ccache g++  -I.  -MMD -I/shared/share/verilator/include -I/shared/share/verilator/include/vltstd -DVL_PRINTF=printf -DVM_COVERAGE=0 -DVM_SC=0 -DVM_TRACE=0 -Wno-char-subscripts -Wno-sign-compare -Wno-uninitialized -Wno-unused-but-set-variable -Wno-unused-parameter -Wno-unused-variable     -I/shared/cse502 -g3 -std=c++11   -c -o Vtop__ALLsup.o Vtop__ALLsup.cpp
+      Archiving Vtop__ALL.a ...
+ar r Vtop__ALL.a Vtop__ALLcls.o Vtop__ALLsup.o
+ranlib Vtop__ALL.a
+g++    fake-os.o hardware.o main.o system.o verilated.o verilated_dpi.o Vtop__ALL.a   -Wl,-rpath=/shared/cse502/DRAMSim2 -lelf -lncurses -lrt /shared/cse502/DRAMSim2/libdramsim.so  -o Vtop -lm -lstdc++  2>&1 | c++filt
+make[1]: Leaving directory '/home/dimohanty/Delulu/obj_dir'
+cd obj_dir/ && env HAVETLB=n FULLSYSTEM=n ./Vtop /shared/cse502/tests/project/prog1
+Loading ELF header #0. offset: 0 filesize: 534803 memsize: 534803 vaddr: 10000 paddr: 10000 align: 4096
+Read 534803 bytes at 10000
+Loading ELF header #1. offset: 82f50 filesize: 1c00 memsize: 3320 vaddr: 93f50 paddr: 93f50 align: 4096
+Read 7168 bytes at 93f50
+Setting errno_addr to 93f70 (TLS at 93f50+0x20)
+[EXECUTE] Transaction logging enabled to execute_transactions.log
+[DCACHE] Transaction logging enabled to dcache_transactions.log
+[DECODER] Error logging enabled to decoder_errors.log
+[WB] Register update logging enabled to register_updates.log
+[ALU] Error logging enabled to alu_errors.log
+[ALU] Operations logging enabled to alu_operations.log
+[DCACHE] Snoop logging enabled to snoop_invalidations.log
+Hello world!
+Brought to you by /shared/cse502/tests/project/prog1, with 1 argument.
+[DECODER] Error log file closed
+[EXECUTE] Transaction log file closed
+[ALU] Closed error log file
+[ALU] Closed operations log file
+[DCACHE] Transaction log file closed
+[DCACHE] Snoop log file closed
+[WB] Register update log file closed
