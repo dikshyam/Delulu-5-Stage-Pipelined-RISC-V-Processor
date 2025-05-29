@@ -494,28 +494,28 @@ always_comb begin
   //       temp_result = operand1 + $signed(operand2);
   //     end
   // Load operations - all calculate the effective address
-ALU_LB, ALU_LH, ALU_LW, ALU_LD, ALU_LBU, ALU_LHU, ALU_LWU: begin
-  // 1. Extract the lower 12 bits of the immediate
-  logic [11:0] imm_12bit = imm[11:0];
-  
-  // 2. Sign-extend the 12-bit immediate to 64 bits
-  logic signed [63:0] signed_imm = {{52{imm_12bit[11]}}, imm_12bit};
-  
-  // 3. Calculate the effective address (base + offset)
-  temp_result = operand1 + signed_imm;
-end
+  ALU_LB, ALU_LH, ALU_LW, ALU_LD, ALU_LBU, ALU_LHU, ALU_LWU: begin
+    // 1. Extract the lower 12 bits of the immediate
+    logic [11:0] imm_12bit = imm[11:0];
+    
+    // 2. Sign-extend the 12-bit immediate to 64 bits
+    logic signed [63:0] signed_imm = {{52{imm_12bit[11]}}, imm_12bit};
+    
+    // 3. Calculate the effective address (base + offset)
+    temp_result = operand1 + signed_imm;
+  end
 
-// Store operations - all calculate the effective address
-ALU_SB, ALU_SH, ALU_SW, ALU_SD: begin
-  // 1. Extract the lower 12 bits of the immediate
-  logic [11:0] imm_12bit = imm[11:0];
-  
-  // 2. Sign-extend the 12-bit immediate to 64 bits
-  logic signed [63:0] signed_imm = {{52{imm_12bit[11]}}, imm_12bit};
-  
-  // 3. Calculate the effective address (base + offset)
-  temp_result = operand1 + signed_imm;
-end
+  // Store operations - all calculate the effective address
+  ALU_SB, ALU_SH, ALU_SW, ALU_SD: begin
+    // 1. Extract the lower 12 bits of the immediate
+    logic [11:0] imm_12bit = imm[11:0];
+    
+    // 2. Sign-extend the 12-bit immediate to 64 bits
+    logic signed [63:0] signed_imm = {{52{imm_12bit[11]}}, imm_12bit};
+    
+    // 3. Calculate the effective address (base + offset)
+    temp_result = operand1 + signed_imm;
+  end
 
   // // I-Type Immediate instructions
   //     ALU_ADDI:  temp_result = operand1 + $signed(operand2);

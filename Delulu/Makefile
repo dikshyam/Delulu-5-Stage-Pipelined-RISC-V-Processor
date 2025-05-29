@@ -9,7 +9,7 @@ PROG=/shared/cse502/tests/project/prog1
 
 #PROG=/shared/cse502/tests/bbl.bin
 
-TRACE?=
+TRACE?=--trace
 HAVETLB=n
 FULLSYSTEM=n
 
